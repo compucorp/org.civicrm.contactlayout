@@ -2,6 +2,7 @@
 
 require_once 'contactlayout.civix.php';
 use CRM_Contactlayout_ExtensionUtil as E;
+use CRM_Contactlayout_Helper_ProfileRelatedContact as ProfileRelatedContact;
 
 /**
  * Implements hook_civicrm_config().
@@ -133,11 +134,14 @@ function contactlayout_civicrm_pageRun(&$page) {
       $layout = CRM_Contactlayout_BAO_ContactLayout::getLayout($contactID);
       if ($layout) {
         $profileBlocks = [];
-        foreach ($layout['blocks'] as $row) {
-          foreach ($row as $column) {
-            foreach ($column as $block) {
+        foreach ($layout['blocks'] as &$row) {
+          foreach ($row as &$column) {
+            foreach ($column as &$block) {
               if (!empty($block['profile_id'])) {
-                $profileBlocks[$block['profile_id']] = CRM_Contactlayout_Page_Inline_ProfileBlock::getProfileBlock($block['profile_id'], $contactID);
+                $relatedContact = ProfileRelatedContact::get($contactID, !empty($block['related_rel']) ? $block['related_rel'] : '');
+                $profileContact = $relatedContact ? $relatedContact : $contactID;
+                $profileBlocks[$block['profile_id']] = CRM_Contactlayout_Page_Inline_ProfileBlock::getProfileBlock($block['profile_id'], $profileContact);
+                $block['rel_cid'] = $relatedContact;
               }
             }
           }
