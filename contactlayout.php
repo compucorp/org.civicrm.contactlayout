@@ -143,13 +143,13 @@ function contactlayout_civicrm_pageRun(&$page) {
 
               $profileContact = $contactID;
               $block['rel_cid'] = NULL;
-              $block['rel_isMissing'] = FALSE;
+              $block['rel_is_missing'] = FALSE;
 
               if (!empty($block['related_rel'])) {
                 $relatedContact = ProfileRelatedContact::get($contactID, $block['related_rel']);
                 $profileContact = $relatedContact;
                 $block['rel_cid'] = $relatedContact;
-                $block['rel_isMissing'] = $relatedContact === NULL;
+                $block['rel_is_missing'] = $relatedContact === NULL;
               }
 
               $profileBlocks[$block['profile_id']] = CRM_Contactlayout_Page_Inline_ProfileBlock::getProfileBlock(

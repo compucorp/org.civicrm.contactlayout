@@ -1,11 +1,11 @@
 <div id="{$block.selector|replace:'#':''}"
-  {if $permission EQ 'edit' && !$block.rel_isMissing}
+  {if $permission EQ 'edit' && !$block.rel_is_missing}
     class="crm-inline-edit"
     data-dependent-fields={$block.refresh|@json_encode}
     data-edit-params='{ldelim}"cid": "{$contactId}", "rel_cid": "{$relatedContact}", "gid": {$block.profile_id}, "class_name": "CRM_Contactlayout_Form_Inline_ProfileBlock"{rdelim}'
   {/if}
 >
-  {if !$block.rel_isMissing}
+  {if !$block.rel_is_missing}
     <div class="crm-clear crm-inline-block-content" {if $permission EQ 'edit'}title="{ts}Edit{/ts}"{/if}>
       {if $permission EQ 'edit'}
         <div class="crm-edit-help">
