@@ -7,8 +7,6 @@ class CRM_Contactlayout_Form_RelationshipSelection extends CRM_Core_Form {
 
   /**
    * Adds the relationship selection field and the save and cancel button.
-   *
-   * @inheritDoc
    */
   public function buildQuickForm() {
     $relationshipOptions = $this->getRelationshipOptions();
@@ -43,8 +41,6 @@ class CRM_Contactlayout_Form_RelationshipSelection extends CRM_Core_Form {
 
   /**
    * Attaches the selected relationship value to the AJAX response object of the form.
-   *
-   * @inheritDoc
    */
   public function postProcess() {
     $values = $this->exportValues();
@@ -59,8 +55,6 @@ class CRM_Contactlayout_Form_RelationshipSelection extends CRM_Core_Form {
    * Accepts a default value for the relationship field.
    *
    * The value can come from a GET request parameter.
-   *
-   * @inheritDoc
    */
   public function setDefaultValues() {
     $defaults = parent::setDefaultValues();
