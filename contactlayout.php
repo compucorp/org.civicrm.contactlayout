@@ -152,10 +152,14 @@ function contactlayout_civicrm_pageRun(&$page) {
                 $block['rel_is_missing'] = $relatedContact === NULL;
               }
 
-              $profileBlocks[$block['profile_id']] = CRM_Contactlayout_Page_Inline_ProfileBlock::getProfileBlock(
-                $block['profile_id'],
-                $profileContact
-              );
+              // Include the block information only when there is a contact profile to display.
+              // This can be empty when there are no results for a particular relationship block.
+              if (!empty($profileContact)) {
+                $profileBlocks[$block['profile_id']] = CRM_Contactlayout_Page_Inline_ProfileBlock::getProfileBlock(
+                  $block['profile_id'],
+                  $profileContact
+                );
+              }
             }
           }
         }
