@@ -1,4 +1,4 @@
-(function(angular, $, _) {
+(function(angular, $, _, RELATIONSHIP_TYPES) {
   // Autoload dependencies.
   angular.module('contactlayout', CRM.angRequires('contactlayout'));
 
@@ -44,6 +44,21 @@
       editingTabIcon,
       profileEntities = [{entity_name: "contact_1", entity_type: "IndividualModel"}],
       allBlocks = loadBlocks(data.blocks);
+
+    $scope.checkBlockValidity = function (block) {
+      if (block.related_rel) {
+        var relationship = getRelationshipFromOption(block.related_rel);
+        var contactTypes = relationship.direction === 'ab'
+          ? { onBlock: relationship.type.contact_type_a, viewing: relationship.type.contact_type_b }
+          : { onBlock: relationship.type.contact_type_b, viewing: relationship.type.contact_type_a };
+        // console.log('-', $scope.selectedLayout.contact_type, contactTypes.viewing, '--', block.contact_type, )
+        return $scope.selectedLayout.contact_type && ($scope.selectedLayout.contact_type !== contactTypes.viewing
+          || block.contact_type !== contactTypes.onBlock);
+      }
+      // $scope.selectedLayout.contact_type
+      //  block.contact_type
+      return $scope.selectedLayout.contact_type && block.contact_type && $scope.selectedLayout.contact_type !== block.contact_type;
+    };
 
     $scope.selectLayout = function(layout) {
       $scope.selectedLayout = layout;
@@ -138,18 +153,37 @@
      * @param {object} block a contact layout block object.
      */
     $scope.editBlockRelationship = function(block) {
+      var CONTACT_ICONS = {
+        Individual: 'fa fa-user',
+        Organization: 'fa fa-building',
+        Household: 'fa fa-home'
+      };
       var model = {
         ts: ts,
+        relationshipLabel: '',
         selectedRelationship: block.related_rel,
         relationshipOptions: contactLayoutRelationshipOptions,
+        contactIcons: {
+          onBlock: CONTACT_ICONS.Individual,
+          viewing: CONTACT_ICONS.Individual,
+        },
         displayHelp: function (event) {
           event.preventDefault();
           CRM.help('Relationship selection', 'What is the relationship of the contact we want to display on this block?');
         },
-        getSelectedRelationshipLabel: function () {
-          return _.find(contactLayoutRelationshipOptions.options, {
-            id: model.selectedRelationship
-          }).text;
+        handleRelationshipOptionSelection: function () {
+          var relationship = getRelationshipFromOption(model.selectedRelationship);
+          var relationshipOption = _.find(model.relationshipOptions.options, { id: model.selectedRelationship });
+          var contactOnBlockType = relationship.direction === 'ab'
+            ? relationship.type.contact_type_a
+            : relationship.type.contact_type_b;
+          var viewingContactType = relationship.direction === 'ab'
+            ? relationship.type.contact_type_b
+            : relationship.type.contact_type_a;
+
+          model.relationshipLabel = relationshipOption.text;
+          model.contactIcons.onBlock = CONTACT_ICONS[contactOnBlockType] || CONTACT_ICONS.Individual;
+          model.contactIcons.viewing = CONTACT_ICONS[viewingContactType] || CONTACT_ICONS.Individual;
         }
       };
       var dialogOptions = {
@@ -176,7 +210,6 @@
         ]
       };
 
-      contactLayoutRelationshipOptions.loadOptions();
       dialogService.open(
         'editBlockRelationshipDialog',
         '~/contactlayout/edit-block-relationship-dialog.html',
@@ -405,6 +438,17 @@
       return _.pick(block, 'name', 'title', 'collapsible', 'collapsed', 'showTitle', 'related_rel');
     }
 
+    function getRelationshipFromOption(relationshipOption) {
+      var relationship = relationshipOption.split('_');
+      var relationshipTypeId = parseInt(relationship[0], 10);
+      var relationshipType = _.find(RELATIONSHIP_TYPES, { id: relationshipTypeId });
+
+      return {
+        type: relationshipType,
+        direction: relationship[1]
+      };
+    }
+
     // Write layout data to the server
     function writeRecords(data) {
       $scope.saving = true;
@@ -567,26 +611,7 @@
       var relationshipOptionsPromise;
       var service = this;
 
-      service.isLoading = false;
-      service.options = [];
-
-      // loads and stores the relationship type options.
-      service.loadOptions = function () {
-        service.isLoading = true;
-
-        if (!relationshipOptionsPromise) {
-          relationshipOptionsPromise = crmApi4('RelationshipType', 'get', {
-            where: [['is_active', '=', true]]
-          });
-        }
-
-        return relationshipOptionsPromise
-          .then(formatRelationshipOptions)
-          .then(function (options) {
-            service.isLoading = false;
-            service.options = options;
-          })
-      };
+      service.options = formatRelationshipOptions(RELATIONSHIP_TYPES);
 
       // for each relationship type, it includes an option for the a_b relationship
       // and another for the b_a relationship.
@@ -609,4 +634,4 @@
       }
     });
 
-})(angular, CRM.$, CRM._);
+})(angular, CRM.$, CRM._, CRM['contactlayout'].relationshipTypes);

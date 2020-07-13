@@ -69,7 +69,30 @@ class CRM_Contactlayout_BAO_ContactLayout extends CRM_Contactlayout_DAO_ContactL
         foreach ($row as &$column) {
           foreach ($column as &$block) {
             $blockInfo = self::getBlock($block['name']);
-            if ($blockInfo && (!$contactType || empty($blockInfo['contact_type']) || $contactType == $blockInfo['contact_type'])) {
+
+            if ($block['related_rel']) {
+              $relationship = explode('_', $block['related_rel']);
+              $relationshipTypeId = $relationship[0];
+              $relationshipDirection = $relationship[1];
+              $relationshipType = \Civi\Api4\RelationshipType::get()
+                ->addWhere('id', '=', $relationshipTypeId)
+                ->addWhere('is_active', '=', TRUE)
+                ->execute()
+                ->first();
+
+              if ($relationshipDirection === 'r' && ($contactType === $relationshipType['contact_type_a'] || $contactType === $relationshipType['contact_type_b'])) {
+                $block += $blockInfo;
+              }
+              elseif ($relationshipDirection === 'ab' && $contactType === $relationshipType['contact_type_b']) {
+                $block += $blockInfo;
+              }
+              elseif ($relationshipDirection === 'ba' && $contactType === $relationshipType['contact_type_a']) {
+                $block += $blockInfo;
+              } else {
+                $block = FALSE;
+              }
+            }
+            elseif ($blockInfo && (!$contactType || empty($blockInfo['contact_type']) || $contactType == $blockInfo['contact_type'])) {
               $block += $blockInfo;
             }
             // Invalid or missing block
